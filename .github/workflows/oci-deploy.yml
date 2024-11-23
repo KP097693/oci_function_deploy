@@ -1,5 +1,15 @@
 version: '1.0'
 
+name: CI/CD Pipeline for OCI Function
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on push to the main branch
+  pull_request:
+    branches:
+      - main  # Trigger on pull requests to the main branch
+
 jobs:
   # Job to build the Docker image
   build_image:
