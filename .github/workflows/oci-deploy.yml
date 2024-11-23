@@ -1,49 +1,48 @@
-name: OCI Functions Deployment
-
-on:
-  push:
-    branches:
-      - main  # Trigger the workflow when code is pushed to the main branch
+version: '1.0'
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  # Job to build the Docker image
+  build_image:
+    docker:
+      image: docker:latest
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - echo "Building Docker image..."
+      - docker build -t iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:latest .
+      - docker tag iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:latest iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:${CI_COMMIT_SHA}
 
-    steps:
-    # Step 1: Checkout the code
-    - name: Checkout code
-      uses: actions/checkout@v2
+  # Job to push the Docker image to OCI Container Registry
+  push_image:
+    docker:
+      image: docker:latest
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - echo "Logging into OCI Container Registry using Security Token..."
+      - oci --auth security_token --security-token eyJraWQiOiJhc3dfaWFkXzE3MTU2NDgwNzIzNzciLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJvY2lkMS51c2VyLm9jMS4uYWFhYWFhYWFzd3VhamRrM2ZndGVydzNnZG92dGxqd2gzYzdid2J3dGV2MzRudTZ2Y3d4YmxrN3RhbHlhIiwiaXNzIjoiYXV0aFNlcnZpY2Uub3JhY2xlLmNvbSIsInNhbWxfZnByaW50IjoiNjQ6Mzk6MjQ6ZmM6YmI6MGQ6NDE6ZTg6ZjA6MjM6NWQ6MzU6ODA6Mjg6MjI6ODMiLCJwdHlwZSI6InVzZXIiLCJzZXNzX2V4cCI6IlNhdCwgMjMgTm92IDIwMjQgMjA6MTc6MzYgVVRDIiwiYXVkIjoib2NpIiwicHN0eXBlIjoibmF0ZiIsInR0eXBlIjoic2FtbGMiLCJleHAiOjE3MzIzNzI4MDcsImlhdCI6MTczMjM2OTIwNywianRpIjoiZDE1M2JmNDItODJiYS00NjM3LWFhM2EtOGZkOTFkZGE4MThmIiwidGVuYW50Ijoib2NpZDEudGVuYW5jeS5vYzEuLmFhYWFhYWFhZ2tiemdnNmxwenJmNDd4enk0cmpveGc0ZGU2bmNmaXEycm5jbWppdWp2eTJoamd4dnppcSIsImlzX2ZlZCI6InRydWUiLCJncnBzIjoiIiwiandrIjoie1wia2lkXCI6XCJJZ25vcmVkXCIsXCJuXCI6XCJ2MV95U3hLdGxwODdrYi1hTTRDeDZ1dmIyU1UxZHZnOWVVTC1HallTSGJnT2gzcy1DYi1PZl80cWFDS1dsMXVkei1za1p3ZUhsdlU1NkRBMUoxaXpiT0NNSUxNRmhCYlRJSWZFQlJPYWNhTHRaVldQNGFDM3JDRVN5WFJZeDRCLUJ2ZFVUd2tuRk1CcnVDMVYzWkpCMU5ka1ZOUWlMQVZVZGN3clJWdU9ZMlg5djBtNXZPaUx4UlhzM0NxUFR4cnpsekJTY0E5LThFaFRqMDNPWVRrbkNOYmcxY1BMZ2tQMFJ1aFJSQl9haDlwVWRDejR5WGVsaWhfM2habDNaamplTmZ1MkVyLXJhWVNGMzUxbTVUcU9wX2MtZ0pZOHY1RW9zcThNQVhkQ2FvdkZGVmRJeWEtR2d5N1R0OU5uRWxGMWhxdm9XWUYzcTFlMk93a3JmRlExWlFcIixcImVcIjpcIkFRQUJcIixcImt0eVwiOlwiUlNBXCIsXCJ1c2VcIjpudWxsfSJ9.RQM0rTkAaefI752J8rxW2UfRYHoeWsiYD8xGnAM5MgXiGS2gMF_p_B1R4Z66td1EgDomNzGp65RoTBk4CRfXmWpyFz8q0dFFUZz8imXubrRaJojBxLJqBwCqy8Eh8yUFOGqL2KHsjCZVP8aZ6pgwJ1h0zK3dnngirM1hfPOvB1z8-b1V_SNJEHIMmo_p2zOgPUZk0Tn77ugjmp5n28RcHF6dzWUUzdibtyRA1J5Su3a4ZgYDbuLdcvQpo5iJDMXVvLx-6obx-Ll9GfOmfJqDo2W9n1OC9tSaRatAFNYl8llUDrITOf7cpI-Y-m1IWna5SXiu_KHdGdzThh7V2OeZGw login iad.ocir.io
+      - echo "Pushing Docker image to OCI Container Registry..."
+      - docker push iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:latest
+      - docker push iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:${GITHUB_SHA}
 
-    # Step 2: Set up Docker Buildx (to build multi-platform images)
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+  # Job to deploy the image to an existing OCI Function
+  deploy_function:
+    docker:
+      image: oci/oci-cli:latest
+    commands:
+      - echo "Updating Docker image for existing OCI Function..."
+      # Here we update the function to use the newly pushed image
+      - oci fn function update --compartment-id ocid1.compartment.oc1..aaaaaaaai7lpqrjb65oxp7yot4cdlgahobld5xpizdyjyaoef2tjunipxhpa --function-id ocid1.fnfunc.oc1.iad.aaaaaaaajmotp4ycz5pms3y4q3zqdxra6fyg53fxu2ap36yvqoglkbjwxmka --image iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:latest
+      - oci fn function invoke --function-id ocid1.fnfunc.oc1.iad.aaaaaaaajmotp4ycz5pms3y4q3zqdxra6fyg53fxu2ap36yvqoglkbjwxmka --body '{}'
 
-    # Step 3: Build and push Docker image to OCI Registry
-    - name: Build and push Docker image to OCI Registry
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        push: true
-        tags: <oci-registry>/<repo>/my-function:latest  # Replace with your OCI registry details
-        file: ./Dockerfile
-
-    # Step 4: Authenticate to OCI using OAuth token
-    - name: Authenticate with OCI using OAuth Token
-      run: |
-        echo ${{ secrets.OCI_OAUTH_TOKEN }} > /tmp/oauth_token
-        oci setup config --auth oauth2 --token-file /tmp/oauth_token
-
-    # Step 5: Deploy the function to OCI Functions
-    - name: Deploy to OCI Functions
-      run: |
-        # Create the app if it doesn't exist
-        oci fn app create --compartment-id <compartment-id> --name <app-name> --region <region>
-
-        # Deploy the function
-        oci fn function create \
-          --compartment-id <compartment-id> \
-          --app-id <app-id> \
-          --name <function-name> \
-          --image <oci-registry>/<repo>/my-function:latest \
-          --memory 256 \
-          --timeout 30
+workflows:
+  version: '1.0'
+  pipeline:
+    jobs:
+      - build_image
+      - push_image:
+          requires:
+            - build_image
+      - deploy_function:
+          requires:
+            - push_image
