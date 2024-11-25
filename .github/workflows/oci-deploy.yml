@@ -16,9 +16,7 @@ jobs:
 
       - name: Install jq and Docker
         run: |
-          sudo apt-get update
           sudo apt-get install -y jq
-          sudo apt-get install -y docker.io
           
           # Verify jq and Docker installation
       - name: Verify jq and Docker versions
