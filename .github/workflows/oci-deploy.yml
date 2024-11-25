@@ -45,11 +45,11 @@ jobs:
       - oci fn function update --compartment-id ocid1.compartment.oc1..aaaaaaaai7lpqrjb65oxp7yot4cdlgahobld5xpizdyjyaoef2tjunipxhpa --function-id ocid1.fnfunc.oc1.iad.aaaaaaaajmotp4ycz5pms3y4q3zqdxra6fyg53fxu2ap36yvqoglkbjwxmka --image iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:latest
       - echo "Creating or updating HTTP trigger for function..."
       # Create or update an HTTP trigger
-      - oci fn trigger create \
-          --compartment-id ocid1.compartment.oc1..aaaaaaaai7lpqrjb65oxp7yot4cdlgahobld5xpizdyjyaoef2tjunipxhpa \
-          --function-id ocid1.fnfunc.oc1.iad.aaaaaaaajmotp4ycz5pms3y4q3zqdxra6fyg53fxu2ap36yvqoglkbjwxmka \
-          --name my-http-trigger \
-          --type http
+#      - oci fn trigger create \
+#          --compartment-id ocid1.compartment.oc1..aaaaaaaai7lpqrjb65oxp7yot4cdlgahobld5xpizdyjyaoef2tjunipxhpa \
+#          --function-id ocid1.fnfunc.oc1.iad.aaaaaaaajmotp4ycz5pms3y4q3zqdxra6fyg53fxu2ap36yvqoglkbjwxmka \
+#          --name my-http-trigger \
+#          --type http
       - echo "Function is successfully deployed and ready to receive HTTP requests."
       - oci fn function invoke --function-id ocid1.fnfunc.oc1.iad.aaaaaaaajmotp4ycz5pms3y4q3zqdxra6fyg53fxu2ap36yvqoglkbjwxmka --body '{}'
 
