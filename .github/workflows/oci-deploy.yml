@@ -24,8 +24,11 @@ jobs:
         run: |
           echo "Getting OCI token..."
           # Retrieve token dynamically from OCI CLI
-          token=$(oci raw-request --region iad --profile DEFAULT --auth security_token --http-method GET --target-uri "https://iad.ocir.io/20180419/docker/token" | jq -r .data.token)
+          response=$(oci raw-request --region iad --profile DEFAULT --auth security_token --http-method GET --target-uri "https://iad.ocir.io/20180419/docker/token")
+          echo "Raw response: $response"
+          token=$(echo "$response" | jq -r .data.token)
           echo "$token" | docker login -u 'BEARER_TOKEN' --password-stdin iad.ocir.io
+
 
       - name: Pull and Tag Docker Image
         run: |
