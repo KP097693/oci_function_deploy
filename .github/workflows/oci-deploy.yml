@@ -1,13 +1,3 @@
-name: CI/CD Pipeline for OCI Function
-
-on:
-  push:
-    branches:
-      - master  # Trigger the workflow on push to the master branch
-  pull_request:
-    branches:
-      - master  # Trigger on pull requests to the master branch
-
 jobs:
   # Job to build the Docker image
   build_image:
@@ -15,13 +5,35 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+
+      # Install OCI CLI and jq
+      - name: Install OCI CLI and jq
+        run: |
+          python3 -m pip install oci-cli
+          sudo apt-get install jq
+
+      # Log in to OCI Container Registry using a Security Token (directly passing token)
+      - name: Log in to OCI Container Registry
+        run: |
+          echo "Logging in to OCI Container Registry..."
+          oci raw-request --region iad --profile DEFAULT --auth security_token --http-method GET --target-uri "https://iad.ocir.io/20180419/docker/token" \
+          -H "Authorization: Bearer eyJraWQiOiJhc3dfaWFkXzE3MTU2NDgwNzIzNzciLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJvY2lkMS51c2VyLm9jMS4uYWFhYWFhYWFzd3VhamRrM2ZndGVydzNnZG92dGxqd2gzYzdid2J3dGV2MzRudTZ2Y3d4YmxrN3RhbHlhIiwiaXNzIjoiYXV0aFNlcnZpY2Uub3JhY2xlLmNvbSIsInNhbWxfZnByaW50IjoiNjQ6Mzk6MjQ6ZmM6YmI6MGQ6NDE6ZTg6ZjA6MjM6NWQ6MzU6ODA6Mjg6MjI6ODMiLCJwdHlwZSI6InVzZXIiLCJzZXNzX2V4cCI6Ik1vbiwgMjUgTm92IDIwMjQgMTM6NDc6NDYgVVRDIiwiYXVkIjoib2NpIiwicHN0eXBlIjoibmF0ZiIsInR0eXBlIjoic2FtbGMiLCJleHAiOjE3MzI1MjY3NDIsImlhdCI6MTczMjUyMzE0MiwianRpIjoiYzM5MmI1NGQtOGQ5Ni00Yjk1LWEzMmUtMjY3Mzg1NjQ1YjlmIiwidGVuYW50Ijoib2NpZDEudGVuYW5jeS5vYzEuLmFhYWFhYWFhZ2tiemdnNmxwenJmNDd4enk0cmpveGc0ZGU2bmNmaXEycm5jbWppdWp2eTJoamd4dnppcSIsImlzX2ZlZCI6InRydWUiLCJncnBzIjoiIiwiandrIjoie1wia2lkXCI6XCJJZ25vcmVkXCIsXCJuXCI6XCIwTmx2LW03ZmlBWmo2b2RQc1IxTHRYNUVON0RtMXg4UFprZGtoNjdiRm5IdjJsYXZrQUd4TE94dVVJUVcxNkZVU3ZwNFdSRW1JYjk0OHZQNVNvWmhBVlpkbmk3cEU5TlVGV1pSTHR6a0t5NGkzUUgxNE8za2prbjRIUERUX2RrajNQQ1ZXM0E5bDdfdXNYTkQwRE9yRjBfT0hTdl9KdzJ1bGI0WTFVS3NTQnEwUl82Zk9BMl9panNqU0dXUXZHdzRwM2YySkloSThNbFV5OVVONk9GN2ZpTE1ZSFk3b1Z4SjdtLV9ZZXBvQjNDS2hWTUZ5WGlpU1Q0aWxyZ2c0STVSZUpTTURZN2hrTnZocEU4S0E0Ykkya3pLLU4zUDFJMURfa3FSRDBrSWR0TUNQVERud2ZQTXVPaU1UT0pPMGpTQkJjbnluM2t4a3FvNm5tbTlOU2IyMXdcIixcImVcIjpcIkFRQUJcIixcImt0eVwiOlwiUlNBXCIsXCJ1c2VcIjpudWxsfSJ9.QYrqttK9KaUdJwNN5ucmForBWRe_JnDi0ZUwEop5LMR1HB-SyyXwlRsqMmd_sqw4mxAoodt51TgpgCpdqLyEIU-hOyejHVNqQufO1ctBIEhsSI1wumIsRbGEaS01QNEQWNx-KhEQ1pMXV0yl7WJcjcPm9l1lRG_b96zHJoOprpUbL1YVl2JJrm1IV3Dx-sHodzJA465S7BOLZnQ-5vGqu4xa3uwRZAao6LDLPWA1AxbN3jPOi416hXmy6AFPt0v8p_x51lhGKmtAmHLIEjSsF_skxL87JJvUrkLHTCm8qq21xkh_9bJKRrTTinCPOK11lCeJ09N9aBFy9eI7pSj-_Q" | jq -r .data.token | docker login -u BEARER_TOKEN --password-stdin iad.ocir.io
+
+      # Build Docker image
       - name: Build Docker image
         run: |
           echo "Building Docker image..."
           docker build -t iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:latest .
           docker tag iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:latest iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:${GITHUB_SHA}
+
+      # Verify the image exists locally
+      - name: Verify image exists locally
+        run: |
+          docker images | grep "iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file" || echo "Image not found"
 
   # Job to push the Docker image to OCI Container Registry
   push_image:
@@ -30,64 +42,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Install OCI CLI using pip
-        run: |
-          python3 -m pip install oci-cli
-      - name: Set up OCI CLI authentication using Security Token
-        run: |
-          echo "Setting up OCI CLI authentication with Security Token..."
-          
-          # Create OCI CLI config file dynamically with hardcoded values
-          mkdir -p $HOME/.oci
-          echo "[DEFAULT]" > $HOME/.oci/config
-          echo "user=ocid1.user.oc1..aaaaaaaai7lpqrjb65oxp7yot4cdlgahobld5xpizdyjyaoef2tjunipxhpa" >> $HOME/.oci/config  # Replace with actual user OCID
-          echo "fingerprint=38:3d:8d:57:80:d9:fd:ba:a5:ed:7b:3c:2f:3d:72:41" >> $HOME/.oci/config  # Replace with actual fingerprint
-          
-          # Path to the .pem file in your repository using $(pwd) to resolve path dynamically
-          echo "key_file=$(pwd)/config/oci_private_key.pem" >> $HOME/.oci/config
-          
-          echo "tenancy=ocid1.tenancy.oc1..aaaaaaaakz4fqvlqgsfjk67yt4ktb32zvmborhbj2klgk4pfgg34f6j6bnk" >> $HOME/.oci/config  # Replace with actual tenancy OCID
-          echo "region=us-ashburn-1" >> $HOME/.oci/config  # Replace with actual region
-          
-          # Export OCI CLI authentication environment variable for security token
-          export OCI_CLI_AUTH=security_token
-          export OCI_CLI_SECURITY_TOKEN="eyJraWQiOiJhc3dfaWFkXzE3MTU2NDgwNzIzNzciLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJvY2lkMS51c2VyLm9jMS4uYWFhYWFhYWFzd3VhamRrM2ZndGVydzNnZG92dGxqd2gzYzdid2J3dGV2MzRudTZ2Y3d4YmxrN3RhbHlhIiwiaXNzIjoiYXV0aFNlcnZpY2Uub3JhY2xlLmNvbSIsInNhbWxfZnByaW50IjoiNjQ6Mzk6MjQ6ZmM6YmI6MGQ6NDE6ZTg6ZjA6MjM6NWQ6MzU6ODA6Mjg6MjI6ODMiLCJwdHlwZSI6InVzZXIiLCJzZXNzX2V4cCI6Ik1vbiwgMjUgTm92IDIwMjQgMTM6NDc6NDYgVVRDIiwiYXVkIjoib2NpIiwicHN0eXBlIjoibmF0ZiIsInR0eXBlIjoic2FtbGMiLCJleHAiOjE3MzI1MjQ3MTEsImlhdCI6MTczMjUyMTExMSwianRpIjoiNmQ5OTlkMWUtN2ZhYi00ZGU3LWFhMTEtMzlmZjg2YTIxOTgwIiwidGVuYW50Ijoib2NpZDEudGVuYW5jeS5vYzEuLmFhYWFhYWFhZ2tiemdnNmxwenJmNDd4enk0cmpveGc0ZGU2bmNmaXEycm5jbWppdWp2eTJoamd4dnppcSIsImlzX2ZlZCI6InRydWUiLCJncnBzIjoiIiwiandrIjoie1wia2lkXCI6XCJJZ25vcmVkXCIsXCJuXCI6XCJ4T1NNcHNTZXFqbFVBVjZzU3Qya1VQQ2V2T09IT2loMFg1QWRjd3hOdWtBeFlDQnhib2RZUUhTNFAySjdoMi1qWjdYOVZLbVZ3Njd0ajFaejM3dzJQX1MyNDhZd05Id2oxQWVtVVFQSXV6Z2o0ZUtic2w5YWcwX1BYdXQwMVhZbmJiRFRDZFUta28wRzRGMVQ1MVg2UUh0djU3S1hJdHlyY0s0dURyQjBuWHFzOUxGMmhicXY1QmhRdXRWTno4QU1raDF0QWpSTVNQOEFJeUhZOUktTEFOZjhzUXRuU21Ta3RWWFpJTk1tTzIxeEFIZTNWUjJFdUVpMWRVdmNEalF6SUFIVmdHcWxsWElDcFRNeGhHLUNfb0FXRFRrejdZUDhjdzhXUmdTU0NFSDNIU3FoYVp2bEtHaHZuVVFZTGtaNExUbE5WMVVFcElWLWNxY1ZzOUkxNXdcIixcImVcIjpcIkFRQUJcIixcImt0eVwiOlwiUlNBXCIsXCJ1c2VcIjpudWxsfSJ9.d4gkEd57-cjGEn4Qj0iBBmLd_kSt-HJVzR_hXrRvRjIY67oTUpumIh1ZA9_6iVOvZW1d1r3OF0Bis7iV62jPFNFD9znkZ6Kb5T3YpJGy7Z2VDbxSri9CwjzQFXrOa1qRtyZmTtTW1oakFykhtU4_7NDKjH_Kff6Ekl2EVmu-P3OHetK_yfVUwpPAPpuV5FO6rIy6SnLwlb7iRD7eJ7nqwBPIg1b9Smq8Z3YXQ4C0_89FI0N6p8O9vuAKyYS3-AymXgzoi06VSGgaJN6_24srC07fy8l_feF2FlST8h_eluxIAGujPogOfQ7qK3YiKXbVk-UHnFRvwtkVjpbe6LwklA"          
-          # Log in to OCI Container Registry using the security token
-#          oci --auth $OCI_CLI_AUTH login iad.ocir.io
-      - name: Verify image locally exists
-        run: |
-          echo "Verifying image exists locally..."
-          docker images  # This prints the list of all Docker images
-          docker images | grep "iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file" || echo "Image not found"
 
+      # Set up OCI CLI and authenticate
+      - name: Set up OCI CLI
+        uses: oracle-actions/setup-oci-cli@v1
+
+      - name: Log in to OCI Container Registry using a Security Token (directly passing token)
+        run: |
+          echo "Logging in to OCI Container Registry..."
+          oci raw-request --region iad --profile DEFAULT --auth security_token --http-method GET --target-uri "https://iad.ocir.io/20180419/docker/token" \
+          -H "Authorization: Bearer eyJraWQiOiJhc3dfaWFkXzE3MTU2NDgwNzIzNzciLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJvY2lkMS51c2VyLm9jMS4uYWFhYWFhYWFzd3VhamRrM2ZndGVydzNnZG92dGxqd2gzYzdid2J3dGV2MzRudTZ2Y3d4YmxrN3RhbHlhIiwiaXNzIjoiYXV0aFNlcnZpY2Uub3JhY2xlLmNvbSIsInNhbWxfZnByaW50IjoiNjQ6Mzk6MjQ6ZmM6YmI6MGQ6NDE6ZTg6ZjA6MjM6NWQ6MzU6ODA6Mjg6MjI6ODMiLCJwdHlwZSI6InVzZXIiLCJzZXNzX2V4cCI6Ik1vbiwgMjUgTm92IDIwMjQgMTM6NDc6NDYgVVRDIiwiYXVkIjoib2NpIiwicHN0eXBlIjoibmF0ZiIsInR0eXBlIjoic2FtbGMiLCJleHAiOjE3MzI1MjY3NDIsImlhdCI6MTczMjUyMzE0MiwianRpIjoiYzM5MmI1NGQtOGQ5Ni00Yjk1LWEzMmUtMjY3Mzg1NjQ1YjlmIiwidGVuYW50Ijoib2NpZDEudGVuYW5jeS5vYzEuLmFhYWFhYWFhZ2tiemdnNmxwenJmNDd4enk0cmpveGc0ZGU2bmNmaXEycm5jbWppdWp2eTJoamd4dnppcSIsImlzX2ZlZCI6InRydWUiLCJncnBzIjoiIiwiandrIjoie1wia2lkXCI6XCJJZ25vcmVkXCIsXCJuXCI6XCIwTmx2LW03ZmlBWmo2b2RQc1IxTHRYNUVON0RtMXg4UFprZGtoNjdiRm5IdjJsYXZrQUd4TE94dVVJUVcxNkZVU3ZwNFdSRW1JYjk0OHZQNVNvWmhBVlpkbmk3cEU5TlVGV1pSTHR6a0t5NGkzUUgxNE8za2prbjRIUERUX2RrajNQQ1ZXM0E5bDdfdXNYTkQwRE9yRjBfT0hTdl9KdzJ1bGI0WTFVS3NTQnEwUl82Zk9BMl9panNqU0dXUXZHdzRwM2YySkloSThNbFV5OVVONk9GN2ZpTE1ZSFk3b1Z4SjdtLV9ZZXBvQjNDS2hWTUZ5WGlpU1Q0aWxyZ2c0STVSZUpTTURZN2hrTnZocEU4S0E0Ykkya3pLLU4zUDFJMURfa3FSRDBrSWR0TUNQVERud2ZQTXVPaU1UT0pPMGpTQkJjbnluM2t4a3FvNm5tbTlOU2IyMXdcIixcImVcIjpcIkFRQUJcIixcImt0eVwiOlwiUlNBXCIsXCJ1c2VcIjpudWxsfSJ9.QYrqttK9KaUdJwNN5ucmForBWRe_JnDi0ZUwEop5LMR1HB-SyyXwlRsqMmd_sqw4mxAoodt51TgpgCpdqLyEIU-hOyejHVNqQufO1ctBIEhsSI1wumIsRbGEaS01QNEQWNx-KhEQ1pMXV0yl7WJcjcPm9l1lRG_b96zHJoOprpUbL1YVl2JJrm1IV3Dx-sHodzJA465S7BOLZnQ-5vGqu4xa3uwRZAao6LDLPWA1AxbN3jPOi416hXmy6AFPt0v8p_x51lhGKmtAmHLIEjSsF_skxL87JJvUrkLHTCm8qq21xkh_9bJKRrTTinCPOK11lCeJ09N9aBFy9eI7pSj-_Q" | jq -r .data.token | docker login -u BEARER_TOKEN --password-stdin iad.ocir.io
+
+      # Push Docker image to OCI Container Registry
       - name: Push Docker image to OCI Container Registry
         run: |
           echo "Pushing Docker image to OCI Container Registry..."
           docker push iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:latest
           docker push iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:${GITHUB_SHA}
-
-  # Job to deploy the image to an existing OCI Function
-  deploy_function:
-    runs-on: ubuntu-latest
-    needs: push_image
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Set up OCI CLI
-        uses: oracle-actions/setup-oci-cli@v1
-      - name: Update Docker image for OCI Function
-        run: |
-          echo "Updating Docker image for existing OCI Function..."
-          oci fn function update --compartment-id ocid1.compartment.oc1..aaaaaaaai7lpqrjb65oxp7yot4cdlgahobld5xpizdyjyaoef2tjunipxhpa --function-id ocid1.fnfunc.oc1.iad.aaaaaaaajmotp4ycz5pms3y4q3zqdxra6fyg53fxu2ap36yvqoglkbjwxmka --image iad.ocir.io/idlcbf4ihtx7/test-a/test-one/image-file:latest
-      - name: Create or update HTTP trigger for OCI Function
-        run: |
-          echo "Creating or updating HTTP trigger for function..."
-          oci fn trigger create \
-            --compartment-id ocid1.compartment.oc1..aaaaaaaai7lpqrjb65oxp7yot4cdlgahobld5xpizdyjyaoef2tjunipxhpa \
-            --function-id ocid1.fnfunc.oc1.iad.aaaaaaaajmotp4ycz5pms3y4q3zqdxra6fyg53fxu2ap36yvqoglkbjwxmka \
-            --name my-http-trigger \
-            --type http
-      - name: Invoke the OCI Function
-        run: |
-          echo "Invoking OCI function..."
-          oci fn function invoke --function-id ocid1.fnfunc.oc1.iad.aaaaaaaajmotp4ycz5pms3y4q3zqdxra6fyg53fxu2ap36yvqoglkbjwxmka --body '{}'
