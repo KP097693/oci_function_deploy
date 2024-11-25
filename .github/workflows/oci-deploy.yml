@@ -14,9 +14,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-#      - name: Install OCI CLI
-#        run: |
-#          python3 pip install oci-cli
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install OCI CLI using pip
+        run: |
+          python3 -m pip install oci-cli
 
       - name: Get OCI Auth Token and Log into OCIR
         run: |
