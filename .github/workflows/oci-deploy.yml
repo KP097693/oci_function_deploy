@@ -1,39 +1,35 @@
-name: OCI Docker Build and Push
+name: OCI Docker Build and Deploy
 on:
   push:
     branches:
       master
-  pull_request:
-    branches:
-      master
 jobs:
-  build-and-push:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up OCI CLI
-        uses: oracle/oci-cli-action@v2
-        with:
-          oci-cli-version: 'latest'
-
-      - name: Set OCI Credentials
+      - name: Install OCI CLI
         run: |
-          echo "OCI_USERNAME=${{ secrets.OCI_USERNAME }}" >> $GITHUB_ENV
-          echo "OCI_PASSWORD=${{ secrets.OCI_PASSWORD }}" >> $GITHUB_ENV
-          echo "OCI_REGION=${{ secrets.OCI_REGION }}" >> $GITHUB_ENV
-          echo "OCI_NAMESPACE=${{ secrets.OCI_NAMESPACE }}" >> $GITHUB_ENV
-          echo "OCI_REPO=${{ secrets.OCI_REPO }}" >> $GITHUB_ENV
+          python3 pip install oci-cli
 
-      - name: Docker login to OCIR
+      - name: Configure OCI CLI with Security Token
         run: |
-          echo "$OCI_PASSWORD" | docker login -u "$OCI_USERNAME" --password-stdin iad.ocir.io
+          mkdir -p ~/.oci
+          # Write the OCI configuration file
+          echo "${{ secrets.OCI_CONFIG }}" > ~/.oci/config
+          # Write the raw security token to the token file
+          echo "${{ secrets.OCI_SECURITY_TOKEN }}" > ~/.oci/token
+          chmod 600 ~/.oci/config ~/.oci/token
 
-      - name: Build Docker image
+      - name: Authenticate with OCI Registry
         run: |
-          docker build -t $OCI_REGION.ocir.io/$OCI_NAMESPACE/$OCI_REPO/myimage:latest .
+          echo "${{ secrets.OCI_SECURITY_TOKEN }}" | docker login -u "${{ secrets.OCI_USERNAME }}" --password-stdin ${{ secrets.OCI_REGION }}.ocir.io
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_NAMESPACE }}/${{ secrets.OCI_REPO }}:latest .
 
-      - name: Push Docker image to OCIR
+      - name: Push Docker Image to OCIR
         run: |
-          docker push $OCI_REGION.ocir.io/$OCI_NAMESPACE/$OCI_REPO/myimage:latest
+          docker push ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_NAMESPACE }}/${{ secrets.OCI_REPO }}:latest
