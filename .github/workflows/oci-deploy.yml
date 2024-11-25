@@ -21,8 +21,9 @@ jobs:
         run: |
           docker --version
           docker info
-          # Set up Docker Buildx
-          docker setup-buildx-action@v2
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       # Log in to OCI Container Registry using the token (for testing)
       - name: Log in to OCI Container Registry
