@@ -34,6 +34,8 @@ jobs:
         run: |
           curl -L https://github.com/oracle/oci-cli/releases/download/v3.50.2/oci-cli-3.50.2.zip -o oci-cli.zip
           unzip oci-cli.zip
+          cd oci-cli
+          chmod +x install.sh
           sudo ./install.sh
       - name: Log in to OCI Container Registry
         run: |
