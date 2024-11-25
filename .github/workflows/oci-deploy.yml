@@ -1,4 +1,5 @@
-name: OCI Docker Build and Push
+- name: OCI Docker Build and Push
+
 on:
   push:
     branches:
@@ -13,20 +14,43 @@ jobs:
       - name: Set up OCI CLI
         run: | 
           python3 -m pip install oci-cli
-  # Optionally, specify a specific version
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
+      - name: Set up OCI CLI Config
+        run: |
+          # Create OCI CLI config directory
+          mkdir -p ~/.oci
+          # Write the config file using GitHub secrets
+          echo "[DEFAULT]" > ~/.oci/config
+          echo "user=${{ secrets.OCI_USER_OCID }}" >> ~/.oci/config
+          echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
+          echo "key_file=${{ secrets.OCI_KEY_FILE }}" >> ~/.oci/config
+          echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
+          echo "key_file=~/.oci/oci_api_key.pem" >> ~/.oci/config
+          echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
+          # Create OCI Security Token file
+          mkdir -p ~/.oci/sessions/DEFAULT
+          echo "${{ secrets.OCI_SECURITY_TOKEN }}" > ~/.oci/sessions/DEFAULT/token
+
+      - name: Validate OCI CLI Config and Token Files
+        run: |
+          echo "Checking if OCI CLI config file exists:"
+          ls -l ~/.oci/config
+          echo "Config file contents:"
+          cat ~/.oci/config
+          echo "Checking if OCI Security Token file exists:"
+          ls -l ~/.oci/sessions/DEFAULT/token
+          echo "Token file contents:"
+          cat ~/.oci/sessions/DEFAULT/token
 
       - name: OCI Authentication and Docker Login
         run: |
-          # Fetch token from OCI registry using oci raw-request
           RESPONSE=$(oci raw-request --region iad --profile DEFAULT --auth security_token --http-method GET --target-uri "https://iad.ocir.io/20180419/docker/token")
           echo "Raw Response: $RESPONSE"
-          # Use jq to extract the token and login to Docker
           TOKEN=$(echo $RESPONSE | jq -r .data.token)
           echo "Token: $TOKEN"
           echo $TOKEN | docker login -u BEARER_TOKEN --password-stdin http://iad.ocir.io
+
       - name: Build Docker Image
         run: |
           docker build -t iad.ocir.io/${{ secrets.OCI_NAMESPACE }}/${{ secrets.OCI_REPO_NAME }}:latest .
@@ -37,5 +61,4 @@ jobs:
 
       - name: Update or Invoke Function (Optional)
         run: |
-          # Add any commands to invoke or update functions if necessary
           echo "Function update/invoke step here"
