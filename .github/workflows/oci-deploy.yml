@@ -3,7 +3,7 @@ name: Docker Login to OCI Container Registry
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 jobs:
