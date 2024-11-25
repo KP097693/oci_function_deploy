@@ -33,10 +33,26 @@ jobs:
       - name: Install OCI CLI using pip
         run: |
           python3 -m pip install oci-cli
-      - name: Log in to OCI Container Registry
+      - name: Set up OCI CLI authentication using Security Token
         run: |
-          echo "Logging into OCI Container Registry using Security Token..."
-          oci --auth security_token --security-token "eyJraWQiOiJhc3dfaWFkXzE3MTU2NDgwNzIzNzciLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJvY2lkMS51c2VyLm9jMS4uYWFhYWFhYWFzd3VhamRrM2ZndGVydzNnZG92dGxqd2gzYzdid2J3dGV2MzRudTZ2Y3d4YmxrN3RhbHlhIiwiaXNzIjoiYXV0aFNlcnZpY2Uub3JhY2xlLmNvbSIsInNhbWxfZnByaW50IjoiNjQ6Mzk6MjQ6ZmM6YmI6MGQ6NDE6ZTg6ZjA6MjM6NWQ6MzU6ODA6Mjg6MjI6ODMiLCJwdHlwZSI6InVzZXIiLCJzZXNzX2V4cCI6Ik1vbiwgMjUgTm92IDIwMjQgMTM6NDc6NDYgVVRDIiwiYXVkIjoib2NpIiwicHN0eXBlIjoibmF0ZiIsInR0eXBlIjoic2FtbGMiLCJleHAiOjE3MzI1MjA2NjYsImlhdCI6MTczMjUxNzA2NiwianRpIjoiNTJiODcwNzEtZDE0Ny00NmRjLWIwMWMtOTliMjFhYTM5OTI1IiwidGVuYW50Ijoib2NpZDEudGVuYW5jeS5vYzEuLmFhYWFhYWFhZ2tiemdnNmxwenJmNDd4enk0cmpveGc0ZGU2bmNmaXEycm5jbWppdWp2eTJoamd4dnppcSIsImlzX2ZlZCI6InRydWUiLCJncnBzIjoiIiwiandrIjoie1wia2lkXCI6XCJJZ25vcmVkXCIsXCJuXCI6XCJwVUk0ZjRPdEZUaS02NDl2Tjg2VEF1d1JVRTVDQlVLelRoTlItaTJTTFRvZ3NIYVozWWZMUUYtZXpLeFZpb0hEUFVOMUpmZHg2QzE5c1lfVWxWczV5cXhQV2JjR2U2b20xeGxLSmw0OGtrWDZNczBIN21jai1qa19CMWtjVFlmanRwSUhYR19mMnJ3Smc3Y0pOYUVfaGpQMkUySVFpTDNfbnRVOG9UaFVCeWp1eUd6RnVuVDZkcFR6NEt2YXpjZFJiR1Ewb18ybVVUb29uM3JKQjNsUEdNd2RRV0k5dFNmOFUwcUhXS2VqNk4zRF9lZ0Z4cDVYalhTcWFhODhYRU5ReGE0Q3daY2NOek9JTkl1NnNhRmJVM1FFdDJ2Wm9oUjlfU1hxR2RRa0NMaTZWdXBkQXJuUmNzMUFQM1VUZjhrNDhQMG1FM0xyYVprSEt5VzN2NTd1NFFcIixcImVcIjpcIkFRQUJcIixcImt0eVwiOlwiUlNBXCIsXCJ1c2VcIjpudWxsfSJ9.W05zP7vbt6RKNGWAILmGw8HcCg4dvja_rn4RWRai_EJFzTfFow-50hjyb5cni1NSSIVUwzx_Zwg6coTNnZU_w_D861IKS3E5PKiqtzH519d1Tvnytw0r3eCp_IblyCdfA-QEyzVMR9IL3HxEa04vJGRsrokTj88BlDActRI6QlsTBJ6ogRPM9nIk-I-WfWPEFwN21NePXF5GYIULB5lfeqH75p3kfC_JbE2l9Oh4ufizpxcerDwLuK7r4YHjohPtPG6ZwR1lu0BbWUsyNiGHJ6fACCvkZHz39UpB27ll2nF66osPKnWp5_FieBP8SZsumn6kqKFtNrVJut5LIKZKuA"
+          echo "Setting up OCI CLI authentication with Security Token..."
+          
+          # Create OCI CLI config file dynamically with hardcoded values
+          mkdir -p $HOME/.oci
+          echo "[DEFAULT]" > $HOME/.oci/config
+          echo "user=ocid1.user.oc1..aaaaaaaai7lpqrjb65oxp7yot4cdlgahobld5xpizdyjyaoef2tjunipxhpa" >> $HOME/.oci/config  # Replace with actual user OCID
+          echo "fingerprint=38:3d:8d:57:80:d9:fd:ba:a5:ed:7b:3c:2f:3d:72:41" >> $HOME/.oci/config  # Replace with actual fingerprint
+          
+          # Path to the .pem file in your repository using $(pwd) to resolve path dynamically
+          echo "key_file=$(pwd)/config/oci_api_key.pem" >> $HOME/.oci/config
+          
+          echo "tenancy=ocid1.tenancy.oc1..aaaaaaaakz4fqvlqgsfjk67yt4ktb32zvmborhbj2klgk4pfgg34f6j6bnk" >> $HOME/.oci/config  # Replace with actual tenancy OCID
+          echo "region=us-ashburn-1" >> $HOME/.oci/config  # Replace with actual region
+          
+          # Export OCI CLI authentication environment variable for security token
+          export OCI_CLI_AUTH=security_token
+          export OCI_CLI_SECURITY_TOKEN="eyJraWQiOiJhc3dfaWFkXzE3MTU2NDgwNzIzNzciLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJvY2lkMS51c2VyLm9jMS4uYWFhYWFhYWFzd3VhamRrM2ZndGVydzNnZG92dGxqd2gzYzdid2J3dGV2MzRudTZ2Y3d4YmxrN3RhbHlhIiwiaXNzIjoiYXV0aFNlcnZpY2Uub3JhY2xlLmNvbSIsInNhbWxfZnByaW50IjoiNjQ6Mzk6MjQ6ZmM6YmI6MGQ6NDE6ZTg6ZjA6MjM6NWQ6MzU6ODA6Mjg6MjI6ODMiLCJwdHlwZSI6InVzZXIiLCJzZXNzX2V4cCI6Ik1vbiwgMjUgTm92IDIwMjQgMTM6NDc6NDYgVVRDIiwiYXVkIjoib2NpIiwicHN0eXBlIjoibmF0ZiIsInR0eXBlIjoic2FtbGMiLCJleHAiOjE3MzI1MjA2NjYsImlhdCI6MTczMjUxNzA2NiwianRpIjoiNTJiODcwNzEtZDE0Ny00NmRjLWIwMWMtOTliMjFhYTM5OTI1IiwidGVuYW50Ijoib2NpZDEudGVuYW5jeS5vYzEuLmFhYWFhYWFhZ2tiemdnNmxwenJmNDd4enk0cmpveGc0ZGU2bmNmaXEycm5jbWppdWp2eTJoamd4dnppcSIsImlzX2ZlZCI6InRydWUiLCJncnBzIjoiIiwiandrIjoie1wia2lkXCI6XCJJZ25vcmVkXCIsXCJuXCI6XCJwVUk0ZjRPdEZUaS02NDl2Tjg2VEF1d1JVRTVDQlVLelRoTlItaTJTTFRvZ3NIYVozWWZMUUYtZXpLeFZpb0hEUFVOMUpmZHg2QzE5c1lfVWxWczV5cXhQV2JjR2U2b20xeGxLSmw0OGtrWDZNczBIN21jai1qa19CMWtjVFlmanRwSUhYR19mMnJ3Smc3Y0pOYUVfaGpQMkUySVFpTDNfbnRVOG9UaFVCeWp1eUd6RnVuVDZkcFR6NEt2YXpjZFJiR1Ewb18ybVVUb29uM3JKQjNsUEdNd2RRV0k5dFNmOFUwcUhXS2VqNk4zRF9lZ0Z4cDVYalhTcWFhODhYRU5ReGE0Q3daY2NOek9JTkl1NnNhRmJVM1FFdDJ2Wm9oUjlfU1hxR2RRa0NMaTZWdXBkQXJuUmNzMUFQM1VUZjhrNDhQMG1FM0xyYVprSEt5VzN2NTd1NFFcIixcImVcIjpcIkFRQUJcIixcImt0eVwiOlwiUlNBXCIsXCJ1c2VcIjpudWxsfSJ9.W05zP7vbt6RKNGWAILmGw8HcCg4dvja_rn4RWRai_EJFzTfFow-50hjyb5cni1NSSIVUwzx_Zwg6coTNnZU_w_D861IKS3E5PKiqtzH519d1Tvnytw0r3eCp_IblyCdfA-QEyzVMR9IL3HxEa04vJGRsrokTj88BlDActRI6QlsTBJ6ogRPM9nIk-I-WfWPEFwN21NePXF5GYIULB5lfeqH75p3kfC_JbE2l9Oh4ufizpxcerDwLuK7r4YHjohPtPG6ZwR1lu0BbWUsyNiGHJ6fACCvkZHz39UpB27ll2nF66osPKnWp5_FieBP8SZsumn6kqKFtNrVJut5LIKZKuA"
+          oci --auth security_token --security-token $OCI_CLI_SECURITY_TOKEN login iad.ocir.io
       - name: Push Docker image to OCI Container Registry
         run: |
           echo "Pushing Docker image to OCI Container Registry..."
@@ -68,4 +84,3 @@ jobs:
         run: |
           echo "Invoking OCI function..."
           oci fn function invoke --function-id ocid1.fnfunc.oc1.iad.aaaaaaaajmotp4ycz5pms3y4q3zqdxra6fyg53fxu2ap36yvqoglkbjwxmka --body '{}'
-
