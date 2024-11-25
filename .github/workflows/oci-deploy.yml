@@ -14,9 +14,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install jq and Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          sudo apt-get install -y docker.io
+          
+          # Verify jq and Docker installation
+      - name: Verify jq and Docker versions
+        run: |
+          jq --version
+          docker --version
+
       # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+
+      - name: Verify Docker daemon is running
+        run: |
+          docker info
 
       # Install OCI CLI and jq
       - name: Install OCI CLI and jq
@@ -31,7 +47,7 @@ jobs:
 
           # Execute the OCI raw request to get the Docker token
           RESPONSE=$(oci raw-request --region iad --profile DEFAULT --auth security_token --http-method GET --target-uri "https://iad.ocir.io/20180419/docker/token" \
-          -H "Authorization: Bearer ${OCI_SECURITY_TOKEN}")
+          -H "Authorization: Bearer eyJraWQiOiJhc3dfaWFkXzE3MTU2NDgwNzIzNzciLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJvY2lkMS51c2VyLm9jMS4uYWFhYWFhYWFzd3VhamRrM2ZndGVydzNnZG92dGxqd2gzYzdid2J3dGV2MzRudTZ2Y3d4YmxrN3RhbHlhIiwiaXNzIjoiYXV0aFNlcnZpY2Uub3JhY2xlLmNvbSIsInNhbWxfZnByaW50IjoiNjQ6Mzk6MjQ6ZmM6YmI6MGQ6NDE6ZTg6ZjA6MjM6NWQ6MzU6ODA6Mjg6MjI6ODMiLCJwdHlwZSI6InVzZXIiLCJzZXNzX2V4cCI6Ik1vbiwgMjUgTm92IDIwMjQgMTM6NDc6NDYgVVRDIiwiYXVkIjoib2NpIiwicHN0eXBlIjoibmF0ZiIsInR0eXBlIjoic2FtbGMiLCJleHAiOjE3MzI1MjY3NDIsImlhdCI6MTczMjUyMzE0MiwianRpIjoiYzM5MmI1NGQtOGQ5Ni00Yjk1LWEzMmUtMjY3Mzg1NjQ1YjlmIiwidGVuYW50Ijoib2NpZDEudGVuYW5jeS5vYzEuLmFhYWFhYWFhZ2tiemdnNmxwenJmNDd4enk0cmpveGc0ZGU2bmNmaXEycm5jbWppdWp2eTJoamd4dnppcSIsImlzX2ZlZCI6InRydWUiLCJncnBzIjoiIiwiandrIjoie1wia2lkXCI6XCJJZ25vcmVkXCIsXCJuXCI6XCIwTmx2LW03ZmlBWmo2b2RQc1IxTHRYNUVON0RtMXg4UFprZGtoNjdiRm5IdjJsYXZrQUd4TE94dVVJUVcxNkZVU3ZwNFdSRW1JYjk0OHZQNVNvWmhBVlpkbmk3cEU5TlVGV1pSTHR6a0t5NGkzUUgxNE8za2prbjRIUERUX2RrajNQQ1ZXM0E5bDdfdXNYTkQwRE9yRjBfT0hTdl9KdzJ1bGI0WTFVS3NTQnEwUl82Zk9BMl9panNqU0dXUXZHdzRwM2YySkloSThNbFV5OVVONk9GN2ZpTE1ZSFk3b1Z4SjdtLV9ZZXBvQjNDS2hWTUZ5WGlpU1Q0aWxyZ2c0STVSZUpTTURZN2hrTnZocEU4S0E0Ykkya3pLLU4zUDFJMURfa3FSRDBrSWR0TUNQVERud2ZQTXVPaU1UT0pPMGpTQkJjbnluM2t4a3FvNm5tbTlOU2IyMXdcIixcImVcIjpcIkFRQUJcIixcImt0eVwiOlwiUlNBXCIsXCJ1c2VcIjpudWxsfSJ9.QYrqttK9KaUdJwNN5ucmForBWRe_JnDi0ZUwEop5LMR1HB-SyyXwlRsqMmd_sqw4mxAoodt51TgpgCpdqLyEIU-hOyejHVNqQufO1ctBIEhsSI1wumIsRbGEaS01QNEQWNx-KhEQ1pMXV0yl7WJcjcPm9l1lRG_b96zHJoOprpUbL1YVl2JJrm1IV3Dx-sHodzJA465S7BOLZnQ-5vGqu4xa3uwRZAao6LDLPWA1AxbN3jPOi416hXmy6AFPt0v8p_x51lhGKmtAmHLIEjSsF_skxL87JJvUrkLHTCm8qq21xkh_9bJKRrTTinCPOK11lCeJ09N9aBFy9eI7pSj-_Q")
 
           # Print the raw response for debugging purposes
           echo "Raw Response: $RESPONSE"
