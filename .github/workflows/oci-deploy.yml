@@ -29,6 +29,7 @@ jobs:
           # Create OCI Security Token file
           mkdir -p ~/.oci/sessions/DEFAULT
           echo "${{ secrets.OCI_SECURITY_TOKEN }}" > ~/.oci/sessions/DEFAULT/token
+          echo "security_token_file=~/.oci/sessions/DEFAULT/token" >> ~/.oci/config
 
       - name: Validate OCI CLI Config and Token Files
         run: |
