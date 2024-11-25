@@ -30,6 +30,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      - name: Install OCI CLI
+        run: |
+          curl -L https://github.com/oracle/oci-cli/releases/download/v3.50.2/oci-cli-3.50.2.zip -o oci-cli.zip
+          unzip oci-cli.zip
+          sudo ./install.sh
       - name: Log in to OCI Container Registry
         run: |
           echo "Logging into OCI Container Registry using Security Token..."
