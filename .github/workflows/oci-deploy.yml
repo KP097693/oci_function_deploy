@@ -3,10 +3,10 @@ name: CI/CD Pipeline for OCI Function
 on:
   push:
     branches:
-      - main  # Trigger the workflow on push to the main branch
+      - master  # Trigger the workflow on push to the master branch
   pull_request:
     branches:
-      - main  # Trigger on pull requests to the main branch
+      - master  # Trigger on pull requests to the master branch
 
 jobs:
   # Job to build the Docker image
