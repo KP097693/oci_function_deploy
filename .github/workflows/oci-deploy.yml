@@ -20,9 +20,13 @@ jobs:
 
       - name: OCI Authentication and Docker Login
         run: |
-          # Set up OCI CLI authentication and retrieve the token
-          oci raw-request --region iad --profile DEFAULT --auth security_token --http-method GET --target-uri "https://iad.ocir.io/20180419/docker/token" | jq -r .data.token | docker login -u BEARER_TOKEN --password-stdin http://iad.ocir.io
-
+          # Fetch token from OCI registry using oci raw-request
+          RESPONSE=$(oci raw-request --region iad --profile DEFAULT --auth security_token --http-method GET --target-uri "https://iad.ocir.io/20180419/docker/token")
+          echo "Raw Response: $RESPONSE"
+          # Use jq to extract the token and login to Docker
+          TOKEN=$(echo $RESPONSE | jq -r .data.token)
+          echo "Token: $TOKEN"
+          echo $TOKEN | docker login -u BEARER_TOKEN --password-stdin http://iad.ocir.io
       - name: Build Docker Image
         run: |
           docker build -t iad.ocir.io/${{ secrets.OCI_NAMESPACE }}/${{ secrets.OCI_REPO_NAME }}:latest .
