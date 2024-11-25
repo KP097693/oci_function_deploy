@@ -11,9 +11,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up OCI CLI
-        uses: oracle-actions/setup-oci-cli@v1
-        with:
-          version: 'latest'  # Optionally, specify a specific version
+        run: | 
+          python3 -m pip install oci-cli
+  # Optionally, specify a specific version
 
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
