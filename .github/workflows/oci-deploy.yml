@@ -1,36 +1,37 @@
-name: OCI Docker Build and Deploy
+name: OCI Docker Build and Push
 on:
   push:
     branches:
       master
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-      - name: Install OCI CLI
+      - name: Set up OCI CLI
+        uses: oracle-actions/setup-oci-cli@v1
+        with:
+          version: 'latest'  # Optionally, specify a specific version
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: OCI Authentication and Docker Login
         run: |
-          python3 -m pip install oci-cli
+          # Set up OCI CLI authentication and retrieve the token
+          oci raw-request --region iad --profile DEFAULT --auth security_token --http-method GET --target-uri "https://iad.ocir.io/20180419/docker/token" | jq -r .data.token | docker login -u BEARER_TOKEN --password-stdin http://iad.ocir.io
 
-
-      - name: Configure OCI CLI with Security Token
-        run: |
-          mkdir -p ~/.oci
-          # Write the OCI configuration file
-          echo "${{ secrets.OCI_CONFIG }}" > ~/.oci/config
-          # Write the raw security token to the token file
-          echo "${{ secrets.OCI_SECURITY_TOKEN }}" > ~/.oci/token
-          chmod 600 ~/.oci/config ~/.oci/token
-
-      - name: Authenticate with OCI Registry
-        run: |
-          echo "${{ secrets.OCI_SECURITY_TOKEN }}" | docker login -u "${{ secrets.OCI_USERNAME }}" --password-stdin ${{ secrets.OCI_REGION }}.ocir.io
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_NAMESPACE }}/${{ secrets.OCI_REPO }}:latest .
+          docker build -t iad.ocir.io/${{ secrets.OCI_NAMESPACE }}/${{ secrets.OCI_REPO_NAME }}:latest .
 
-      - name: Push Docker Image to OCIR
+      - name: Push Docker Image
         run: |
-          docker push ${{ secrets.OCI_REGION }}.ocir.io/${{ secrets.OCI_NAMESPACE }}/${{ secrets.OCI_REPO }}:latest
+          docker push iad.ocir.io/${{ secrets.OCI_NAMESPACE }}/${{ secrets.OCI_REPO_NAME }}:latest
+
+      - name: Update or Invoke Function (Optional)
+        run: |
+          # Add any commands to invoke or update functions if necessary
+          echo "Function update/invoke step here"
